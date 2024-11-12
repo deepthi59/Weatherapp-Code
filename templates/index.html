@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App with Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #74b9ff, #0984e3);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        form {
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 5px 0 0 5px;
+            border: none;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px;
+            border-radius: 0 5px 5px 0;
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 90%;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .map-container {
+            height: 400px;
+            width: 90%;
+            margin-top: 20px;
+            border-radius: 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Weather App with Map Integration</h1>
+
+    <form method="POST">
+        <input type="text" name="city" placeholder="Enter city..." required />
+        <button type="submit">Get Weather</button>
+    </form>
+
+    {% if weather %}
+    <div class="grid">
+        <div class="card">
+            <h2>{{ weather.name }}</h2>
+            <p><img src="https://img.icons8.com/color/48/sunrise.png" /> Sunrise: {{ weather.sys.sunrise | datetimeformat }}</p>
+            <p><img src="https://img.icons8.com/color/48/sunset.png" /> Sunset: {{ weather.sys.sunset | datetimeformat }}</p>
+            <p><img src="https://img.icons8.com/color/48/wind.png" /> Wind Speed: {{ weather.wind.speed }} m/s</p>
+            <p><img src="https://img.icons8.com/color/48/temperature.png" /> Temperature: {{ weather.main.temp }}°C</p>
+            <p><img src="https://img.icons8.com/color/48/humidity.png" /> Humidity: {{ weather.main.humidity }}%</p>
+        </div>
+
+        <div class="card">
+            <h3>Air Quality & UV Index</h3>
+            <p>Air Quality: {{ air_quality }}</p>
+            <p>UV Index: {{ uv_index }}</p>
+        </div>
+
+        <div class="card">
+            <h3>5-Day Forecast</h3>
+            <select>
+                {% for item in forecast %}
+                <option>{{ item.dt_txt }} - {{ item.main.temp }}°C, {{ item.weather[0].description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>Extreme Weather Conditions</h3>
+            <div class="radio-group">
+                <label><input type="radio" name="alert" onclick="alert('{{ alerts.storm }}')"> Storm</label>
+                <label><input type="radio" name="alert" onclick="alert('{{ alerts.hurricane }}')"> Hurricane</label>
+                <label><input type="radio" name="alert" onclick="alert('{{ alerts.flood }}')"> Flood</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-container" id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([{{ weather.coord.lat }}, {{ weather.coord.lon }}], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([{{ weather.coord.lat }}, {{ weather.coord.lon }}]).addTo(map)
+            .bindPopup(`<b>{{ weather.name }}</b><br>Weather location.`)
+            .openPopup();
+    </script>
+    {% endif %}
+
+</body>
+</html>
