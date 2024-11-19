@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality and UV Index</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="weather-background">
+    <div class="app-container">
+        <header class="weather-header">
+            <h1>Air Quality and UV Index</h1>
+        </header>
+
+        <!-- Air Quality Info Section -->
+        <div class="card">
+            <h2>Air Quality Index (AQI)</h2>
+            <p class="weather-item"><strong>AQI:</strong> {{ air_quality }}</p>
+            <p class="weather-item">
+                {{ 'Good' if air_quality <= 50 else 'Moderate' if air_quality <= 100 else 'Unhealthy' }}
+            </p>
+        </div>
+
+        <!-- UV Index Info Section -->
+        <div class="card">
+            <h2>UV Index</h2>
+            <p class="weather-item"><strong>UV Index:</strong> {{ uv_index }}</p>
+            <p class="weather-item">
+                {{ 'Low' if uv_index <= 2 else 'Moderate' if uv_index <= 5 else 'High' }}
+            </p>
+        </div>
+
+        <!-- Back to Main Page Button -->
+        <div class="back-btn">
+            <a href="{{ url_for('index') }}" class="btn">Back to Main Page</a>
+        </div>
+    </div>
+</body>
+</html>

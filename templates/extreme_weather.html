@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extreme Weather Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="weather-background">
+    <div class="app-container">
+        <!-- Title Section -->
+        <header class="weather-header">
+            <h1>Extreme Weather Prediction</h1>
+        </header>
+
+        <!-- Weather Info Section -->
+        <div class="weather-info">
+            <div class="card">
+                <h2>Weather Details</h2>
+                <div class="weather-item">
+                    <span>Wind Speed:</span>
+                    <span>{{ wind_speed }} m/s</span>
+                </div>
+                <div class="weather-item">
+                    <span>Temperature:</span>
+                    <span>{{ temperature }}°C</span>
+                </div>
+                <div class="weather-item">
+                    <span>Humidity:</span>
+                    <span>{{ humidity }}%</span>
+                </div>
+            </div>
+
+            <!-- Prediction Section -->
+            <div class="card">
+                <h3>Weather Prediction</h3>
+                <p>{{ weather_severity }}</p>
+            </div>
+        </div>
+
+        <!-- Back to Main Page Button -->
+        <div class="back-btn">
+            <a href="{{ url_for('index') }}" class="btn">Back to Main Page</a>
+        </div>
+    </div>
+</body>
+</html>

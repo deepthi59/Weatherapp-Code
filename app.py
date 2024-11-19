@@ -1,22 +1,22 @@
-from flask import Flask, render_template, request
-import requests
+from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
+import requests
 
 app = Flask(__name__)
 
-API_KEY = '75d56929d092065857cffe81fb38afea'  # Replace with your API key
+API_KEY = '75d56929d092065857cffe81fb38afea'
+NEWS_API_KEY = '8d7259598d0a4f4798e0a202917c755a'
 
-# Helper function to format the datetime
+# Helper function to format datetime
 def datetimeformat(value):
-    """Convert Unix timestamp to readable datetime."""
     return datetime.fromtimestamp(value).strftime('%Y-%m-%d %H:%M:%S')
 
 app.jinja_env.filters['datetimeformat'] = datetimeformat
 
-# Function to get current weather data for a city
+# Function to fetch current weather data
 def get_weather_data(city):
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
     try:
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
@@ -24,10 +24,10 @@ def get_weather_data(city):
         print(f"Weather API error: {e}")
         return None
 
-# Function to get 5-day weather forecast for a city
+# Function to fetch 5-day forecast
 def get_forecast(city):
-    url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric"
     try:
+        url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric"
         response = requests.get(url)
         response.raise_for_status()
         return response.json().get('list', [])
@@ -35,10 +35,10 @@ def get_forecast(city):
         print(f"Forecast API error: {e}")
         return []
 
-# Function to get air quality data for coordinates
+# Function to fetch air quality data
 def get_air_quality(lat, lon):
-    url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
     try:
+        url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
         response = requests.get(url)
         response.raise_for_status()
         return response.json()['list'][0]['main']['aqi']
@@ -46,10 +46,10 @@ def get_air_quality(lat, lon):
         print(f"Air quality API error: {e}")
         return None
 
-# Function to get UV index data for coordinates
+# Function to fetch UV index
 def get_uv_index(lat, lon):
-    url = f"http://api.openweathermap.org/data/2.5/uvi?lat={lat}&lon={lon}&appid={API_KEY}"
     try:
+        url = f"http://api.openweathermap.org/data/2.5/uvi?lat={lat}&lon={lon}&appid={API_KEY}"
         response = requests.get(url)
         response.raise_for_status()
         return response.json()['value']
@@ -57,44 +57,67 @@ def get_uv_index(lat, lon):
         print(f"UV index API error: {e}")
         return None
 
+# Function to fetch local weather news using NewsAPI
+def get_local_weather_news(city):
+    try:
+        query = f"{city} weather alerts OR weather warnings OR storm OR weather forecast"
+        url = f"https://newsapi.org/v2/everything?q={query}&apiKey={NEWS_API_KEY}"
+        response = requests.get(url)
+        response.raise_for_status()
+        news_data = response.json()
+        
+        relevant_articles = [article for article in news_data['articles'] if 'weather' in article['title'].lower()]
+        
+        return relevant_articles[:5]  # Fetch top 5 news articles
+    except requests.exceptions.RequestException as e:
+        print(f"News API error: {e}")
+        return []
+
+# Function to generate activity suggestion based on weather
+def get_activity_suggestion(weather_data):
+    temp = weather_data['main']['temp']
+    weather_desc = weather_data['weather'][0]['description']
+    wind_speed = weather_data['wind']['speed']
+    humidity = weather_data['main']['humidity']
+
+    if "rain" in weather_desc or "thunderstorm" in weather_desc:
+        return "It's rainy outside. Perfect time to stay indoors and enjoy a book or a movie!"
+    elif "clear" in weather_desc and temp > 15 and temp < 25 and wind_speed < 5:
+        return "It's a clear day. Great time for a walk in the park!"
+    elif "snow" in weather_desc:
+        return "Snowy day! Consider winter sports or stay cozy inside."
+    elif temp > 25:
+        return "It's warm outside! A perfect day for swimming or an ice cream outing."
+    elif temp < 10:
+        return "Cold weather! Bundle up if you're going out. Perfect for indoor activities."
+    elif wind_speed > 15:
+        return "It's quite windy. Outdoor activities might be challenging."
+    else:
+        return "It's a typical day. Perfect for a variety of activities!"
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     weather_data, forecast_data, air_quality, uv_index = None, [], None, None
-    alerts = {}
+    error_message = None
+    activity_suggestion = None
+    news_articles = []
 
     if request.method == 'POST':
         city = request.form['city']
-        weather_data = get_weather_data(city)
-        forecast_data = get_forecast(city)
-
-        if weather_data and 'coord' in weather_data:
-            lat, lon = weather_data['coord']['lat'], weather_data['coord']['lon']
-            air_quality = get_air_quality(lat, lon)
-            uv_index = get_uv_index(lat, lon)
-
-            # Retrieve necessary data points for prediction criteria
-            wind_speed = weather_data['wind']['speed']  # in m/s
-            humidity = weather_data['main']['humidity']  # in %
-            pressure = weather_data['main'].get('pressure')  # in hPa
-            rainfall = weather_data.get('rain', {}).get('1h', 0)  # rainfall in mm for the last hour
-
-            # Storm Prediction
-            if wind_speed > 20 and humidity > 70 and pressure < 1000:
-                alerts['storm'] = 'Storm alert: High winds and low pressure detected!'
+        if not city.strip():
+            error_message = "City name cannot be empty."
+        else:
+            weather_data = get_weather_data(city)
+            if not weather_data or weather_data.get('cod') != 200:
+                error_message = f"Could not fetch data for '{city}'. Please check the city name and try again."
             else:
-                alerts['storm'] = 'No storm detected.'
-
-            # Hurricane Prediction
-            if wind_speed > 33 and pressure < 980:
-                alerts['hurricane'] = 'Hurricane warning: Extremely high winds and low pressure!'
-            else:
-                alerts['hurricane'] = 'No hurricane detected.'
-
-            # Flood Prediction
-            if rainfall > 50 or (rainfall > 100 and humidity > 85):
-                alerts['flood'] = 'Flood risk alert: Heavy rainfall detected!'
-            else:
-                alerts['flood'] = 'No flood detected.'
+                forecast_data = get_forecast(city)
+                if 'coord' in weather_data:
+                    lat, lon = weather_data['coord']['lat'], weather_data['coord']['lon']
+                    air_quality = get_air_quality(lat, lon)
+                    uv_index = get_uv_index(lat, lon)
+                    activity_suggestion = get_activity_suggestion(weather_data)
+                    news_articles = get_local_weather_news(city)
 
     return render_template(
         'index.html',
@@ -102,8 +125,53 @@ def index():
         forecast=forecast_data,
         air_quality=air_quality,
         uv_index=uv_index,
-        alerts=alerts
+        error_message=error_message,
+        activity_suggestion=activity_suggestion,
+        news_articles=news_articles
     )
+
+@app.route('/air_quality')
+def air_quality_page():
+    city = request.args.get('city', 'Southfield')  # default city if none is passed
+    weather_data = get_weather_data(city)
+
+    if not weather_data or weather_data.get('cod') != 200:
+        return redirect(url_for('index'))
+
+    lat, lon = weather_data['coord']['lat'], weather_data['coord']['lon']
+
+    # Fetch air quality and UV index
+    air_quality = get_air_quality(lat, lon)
+    uv_index = get_uv_index(lat, lon)
+
+    return render_template('air_quality.html', air_quality=air_quality, uv_index=uv_index)
+
+@app.route('/extreme_weather')
+def extreme_weather_page():
+    city = request.args.get('city', 'Southfield')  # default city if none is passed
+    weather_data = get_weather_data(city)
+
+    if not weather_data or weather_data.get('cod') != 200:
+        return redirect(url_for('index'))
+
+    wind_speed = weather_data['wind']['speed']
+    temperature = weather_data['main']['temp']
+    humidity = weather_data['main']['humidity']
+
+    # Define basic extreme weather conditions
+    weather_severity = "No storm indication"
+    if wind_speed > 15:
+        weather_severity = "Wind Advisory"
+    elif temperature > 35:
+        weather_severity = "Heat Warning"
+    elif humidity > 80:
+        weather_severity = "High Humidity Warning"
+
+    return render_template('extreme_weather.html',
+                           wind_speed=wind_speed,
+                           temperature=temperature,
+                           humidity=humidity,
+                           weather_severity=weather_severity)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

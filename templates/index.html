@@ -3,137 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather App with Map</title>
-
+    <title>Weather Prediction Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS for map integration -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom, #74b9ff, #0984e3);
-            color: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        h1 {
-            margin-top: 20px;
-        }
-
-        form {
-            margin: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        input {
-            padding: 10px;
-            border-radius: 5px 0 0 5px;
-            border: none;
-            width: 300px;
-        }
-
-        button {
-            padding: 10px;
-            border-radius: 0 5px 5px 0;
-            background-color: #0984e3;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            width: 90%;
-            margin-top: 20px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 15px;
-        }
-
-        .map-container {
-            height: 400px;
-            width: 90%;
-            margin-top: 20px;
-            border-radius: 15px;
-        }
-
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-    </style>
 </head>
 <body>
+    <div class="app-container">
+        <h1>WeatherView/h1>
+        <form method="POST">
+            <input type="text" name="city" placeholder="Enter city..." required />
+            <button type="submit">Get Weather</button>
+        </form>
 
-    <h1>Weather App with Map Integration</h1>
+        {% if error_message %}
+            <p class="alert-message">{{ error_message }}</p>
+        {% endif %}
 
-    <form method="POST">
-        <input type="text" name="city" placeholder="Enter city..." required />
-        <button type="submit">Get Weather</button>
-    </form>
-
-    {% if weather %}
-    <div class="grid">
-        <div class="card">
-            <h2>{{ weather.name }}</h2>
-            <p><img src="https://img.icons8.com/color/48/sunrise.png" /> Sunrise: {{ weather.sys.sunrise | datetimeformat }}</p>
-            <p><img src="https://img.icons8.com/color/48/sunset.png" /> Sunset: {{ weather.sys.sunset | datetimeformat }}</p>
-            <p><img src="https://img.icons8.com/color/48/wind.png" /> Wind Speed: {{ weather.wind.speed }} m/s</p>
-            <p><img src="https://img.icons8.com/color/48/temperature.png" /> Temperature: {{ weather.main.temp }}°C</p>
-            <p><img src="https://img.icons8.com/color/48/humidity.png" /> Humidity: {{ weather.main.humidity }}%</p>
-        </div>
-
-        <div class="card">
-            <h3>Air Quality & UV Index</h3>
-            <p>Air Quality: {{ air_quality }}</p>
-            <p>UV Index: {{ uv_index }}</p>
-        </div>
-
-        <div class="card">
-            <h3>5-Day Forecast</h3>
-            <select>
-                {% for item in forecast %}
-                <option>{{ item.dt_txt }} - {{ item.main.temp }}°C, {{ item.weather[0].description }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="card">
-            <h3>Extreme Weather Conditions</h3>
-            <div class="radio-group">
-                <label><input type="radio" name="alert" onclick="alert('{{ alerts.storm }}')"> Storm</label>
-                <label><input type="radio" name="alert" onclick="alert('{{ alerts.hurricane }}')"> Hurricane</label>
-                <label><input type="radio" name="alert" onclick="alert('{{ alerts.flood }}')"> Flood</label>
+        {% if weather %}
+        <div class="grid">
+            <div class="card">
+                <h2>{{ weather['name'] }}</h2>
+                <p>Sunrise: {{ weather['sys']['sunrise'] | datetimeformat }}</p>
+                <p>Sunset: {{ weather['sys']['sunset'] | datetimeformat }}</p>
+                <p>Wind Speed: {{ weather['wind']['speed'] }} m/s</p>
+                <p>Temperature: {{ weather['main']['temp'] }}°C</p>
+                <p>Humidity: {{ weather['main']['humidity'] }}%</p>
             </div>
+
+            <div class="card">
+                <a href="{{ url_for('air_quality_page', city=weather['name']) }}">
+                    <button type="button">See More Details (Air Quality & UV Index)</button>
+                </a>
+            </div>
+
+            <div class="card">
+                <a href="{{ url_for('extreme_weather_page', city=weather['name']) }}">
+                    <button type="button">See Extreme Weather Conditions</button>
+                </a>
+            </div>
+
+            <div class="card">
+                <h3>Activity Suggestion</h3>
+                <p>{{ activity_suggestion }}</p>
+            </div>
+
+            <div class="card">
+                <h3>5-Day Forecast</h3>
+                <select>
+                    {% for item in forecast %}
+                        <option>{{ item.dt_txt }} - {{ item.main.temp }}°C, {{ item.weather[0].description }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if news_articles %}
+                <div class="news-card">
+                    <h3>Local Weather News</h3>
+                    {% for article in news_articles %}
+                        <div>
+                            <h4><a href="{{ article.url }}" target="_blank">{{ article.title }}</a></h4>
+                            <p>{{ article.description }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Map container -->
+            <div id="map" style="height: 400px; width: 100%;"></div>
+
         </div>
+        {% endif %}
+
     </div>
 
-    <div class="map-container" id="map"></div>
-
+    <!-- Leaflet JS for map integration -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const map = L.map('map').setView([{{ weather.coord.lat }}, {{ weather.coord.lon }}], 10);
+        // Ensure that we have the latitude and longitude in the weather data
+        {% if weather %}
+        var lat = {{ weather.coord.lat }};
+        var lon = {{ weather.coord.lon }};
+        
+        // Initialize the map
+        var map = L.map('map').setView([lat, lon], 10); // Set default zoom level
 
+        // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: '© OpenStreetMap contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        L.marker([{{ weather.coord.lat }}, {{ weather.coord.lon }}]).addTo(map)
-            .bindPopup(`<b>{{ weather.name }}</b><br>Weather location.`)
+        // Add a marker to the map
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup('<b>{{ weather.name }}</b><br>Weather location.')
             .openPopup();
+        {% endif %}
     </script>
-    {% endif %}
-
 </body>
 </html>
