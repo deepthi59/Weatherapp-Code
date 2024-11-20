@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="app-container">
-        <h1>WeatherView/h1>
+        <h1>Weather Overview</h1>
         <form method="POST">
             <input type="text" name="city" placeholder="Enter city..." required />
             <button type="submit">Get Weather</button>
@@ -57,15 +57,20 @@
                 </select>
             </div>
 
+            <!-- News Section -->
             {% if news_articles %}
                 <div class="news-card">
                     <h3>Local Weather News</h3>
                     {% for article in news_articles %}
-                        <div>
+                        <div class="news-item">
                             <h4><a href="{{ article.url }}" target="_blank">{{ article.title }}</a></h4>
                             <p>{{ article.description }}</p>
                         </div>
                     {% endfor %}
+                </div>
+            {% else %}
+                <div class="news-card">
+                    <p>No news to display</p>
                 </div>
             {% endif %}
 

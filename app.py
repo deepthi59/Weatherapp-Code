@@ -129,7 +129,6 @@ def index():
         activity_suggestion=activity_suggestion,
         news_articles=news_articles
     )
-
 @app.route('/air_quality')
 def air_quality_page():
     city = request.args.get('city', 'Southfield')  # default city if none is passed
