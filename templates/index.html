@@ -79,26 +79,21 @@
 
         </div>
         {% endif %}
-
     </div>
 
     <!-- Leaflet JS for map integration -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Ensure that we have the latitude and longitude in the weather data
         {% if weather %}
         var lat = {{ weather.coord.lat }};
         var lon = {{ weather.coord.lon }};
         
-        // Initialize the map
-        var map = L.map('map').setView([lat, lon], 10); // Set default zoom level
+        var map = L.map('map').setView([lat, lon], 10);
 
-        // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Add a marker to the map
         L.marker([lat, lon]).addTo(map)
             .bindPopup('<b>{{ weather.name }}</b><br>Weather location.')
             .openPopup();

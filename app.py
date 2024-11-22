@@ -1,16 +1,27 @@
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 import requests
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from the .env file
+load_dotenv()
 
 app = Flask(__name__)
 
-API_KEY = '75d56929d092065857cffe81fb38afea'
-NEWS_API_KEY = '8d7259598d0a4f4798e0a202917c755a'
+# Retrieve API keys from environment variables
+API_KEY = os.getenv('API_KEY')  # OpenWeatherMap API key
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')  # News API key
+
+# Check if the API keys are loaded
+if not API_KEY or not NEWS_API_KEY:
+    raise ValueError("API_KEY and NEWS_API_KEY must be set in the .env file")
 
 # Helper function to format datetime
 def datetimeformat(value):
     return datetime.fromtimestamp(value).strftime('%Y-%m-%d %H:%M:%S')
 
+# Register the custom filter for Jinja2 template formatting
 app.jinja_env.filters['datetimeformat'] = datetimeformat
 
 # Function to fetch current weather data
@@ -18,7 +29,7 @@ def get_weather_data(city):
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # Will raise an exception for bad status codes
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Weather API error: {e}")
@@ -129,6 +140,7 @@ def index():
         activity_suggestion=activity_suggestion,
         news_articles=news_articles
     )
+
 @app.route('/air_quality')
 def air_quality_page():
     city = request.args.get('city', 'Southfield')  # default city if none is passed
@@ -170,7 +182,8 @@ def extreme_weather_page():
                            wind_speed=wind_speed,
                            temperature=temperature,
                            humidity=humidity,
-                           weather_severity=weather_severity)
-
+                           weather_severity=weather_severity,
+                           weather=weather_data,  # Pass weather data to the template
+                           city=city)  # Pass city for navigation purposes
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

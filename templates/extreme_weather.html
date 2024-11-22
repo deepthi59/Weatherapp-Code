@@ -6,14 +6,12 @@
     <title>Extreme Weather Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="weather-background">
+<body>
     <div class="app-container">
-        <!-- Title Section -->
         <header class="weather-header">
             <h1>Extreme Weather Prediction</h1>
         </header>
 
-        <!-- Weather Info Section -->
         <div class="weather-info">
             <div class="card">
                 <h2>Weather Details</h2>
@@ -31,16 +29,15 @@
                 </div>
             </div>
 
-            <!-- Prediction Section -->
             <div class="card">
                 <h3>Weather Prediction</h3>
                 <p>{{ weather_severity }}</p>
             </div>
         </div>
 
-        <!-- Back to Main Page Button -->
+        <!-- This button links back to the weather overview page of the same city -->
         <div class="back-btn">
-            <a href="{{ url_for('index') }}" class="btn">Back to Main Page</a>
+            <a href="{{ url_for('index', city=request.args.get('city', 'Southfield')) }}" class="btn">Back to Weather Overview</a>
         </div>
     </div>
 </body>
