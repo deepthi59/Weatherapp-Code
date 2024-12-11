@@ -4,7 +4,7 @@ How to Run the Application
 
 1- Clone the Repository:
 
-git clone https://github.com/yourusername/weather-news-app.git
+git clone https://github.com/deepthi59/Weatherapp-Code.git
 cd weather-news-app
 
 2-Install Dependencies:
