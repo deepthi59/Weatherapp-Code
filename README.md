@@ -1,6 +1,6 @@
 This application is made to help users navigate severe weather conditions in a user friendly manner. 
 
-**How to Run the Application
+How to Run the Application
 
 1- Clone the Repository:
 
