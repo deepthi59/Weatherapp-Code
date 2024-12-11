@@ -11,7 +11,7 @@ cd weather-news-app
 
 2-Install Dependencies:
 
-pip install -r requirments.txt
+pip install -r Requirments.txt
 
 
 3- Open CMD from the directory
