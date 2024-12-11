@@ -8,12 +8,14 @@ git clone https://github.com/deepthi59/Weatherapp-Code.git
 
 cd weather-news-app
 
-2-Install Dependencies:
 
+2-Install Dependencies:
 
 pip install -r requirments.txt
 
 
 3- Open CMD from the directory
+
 python app.py
+
 By default, the app will run on http://127.0.0.1:5000/.
